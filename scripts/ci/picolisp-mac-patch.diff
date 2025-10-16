@@ -1,0 +1,42 @@
+diff --git a/src/Makefile b/src/Makefile
+index ea09cf6..f879cf0 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -1,14 +1,24 @@
+ # 13sep25 Software Lab. Alexander Burger
+ 
++PATH  := $(BREW_DIR)/llvm/bin:$(PATH)
++SHELL := env PATH=$(PATH) /bin/bash
++
+ .SILENT:
+ 
+-CC = clang
++CC = clang \
++	-I $(BREW_DIR)/openssl@3/include \
++	-L $(BREW_DIR)/openssl@3/lib \
++	-I $(BREW_DIR)/readline/include \
++	-L $(BREW_DIR)/readline/lib \
++	-I $(BREW_DIR)/libffi/include \
++	-L $(BREW_DIR)/libffi/lib
+ PIL = ../pil
+-ASM = opt -O2
++ASM = opt -O3
+ LLC = llc
+ LINK = llvm-link
+-SHARED = -shared
+-STRIP = strip
++MAIN = -rdynamic -lc -lutil -lm -ldl -lreadline -lffi
++SHARED = -dynamiclib -undefined dynamic_lookup
++STRIP = : # strip
+ 
+ LLVM = $(shell llvm-config --version | cut -d. -f1)
+ ifeq ($(shell test $(LLVM) -ge 15 -a $(LLVM) -lt 17; echo $$?), 0)
+@@ -45,7 +55,7 @@ base.bc: base.ll
+ 	$(ASM) -o base.bc base.ll
+ 
+ base.ll: $(INC) $(SRC) lib/ex.l
+-	$(PIL) lib/llvm.l lib/ex.l main.l -bye > base.ll
++	$(PIL) lib/llvm.l -quiche lib/ex.l main.l -bye > base.ll
+ 	mv base.map $(LIB)/map
+ 
+ lib.bc: pico.h lib.c
