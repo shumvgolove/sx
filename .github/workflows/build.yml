@@ -623,7 +623,7 @@ jobs:
           PREFIX='${{ github.event.repository.name }}-libs'
 
           # Setup directories
-          mkdir "$INIT_DIR" "$RELEASE_DIR"
+          mkdir -p "$INIT_DIR" "$RELEASE_DIR"
 
           # Prepare desktop builds for  library extraction
           find "${INIT_DIR}/linux" -type f -name 'simplex-desktop-ubuntu-22_04-x86_64.deb' -exec mv {} "${INIT_DIR}/linux.deb" \;
@@ -684,13 +684,13 @@ jobs:
         shell: bash
         run: |
           # Prepare final dir
-          mkdir ./release-assets
+          mkdir -p ./release-assets
 
           # Move everything to releases except tests
           find ./artifacts -type f ! -name "*simplex-chat-test*" -exec mv {} ./release-assets/ \;
 
           # Prepare files
-          find "./artifacts" -type f | sort > files.txt
+          find "./release-assets" -type f | sort > files.txt
 
           # Prepare hashes
           while IFS= read -r filepath; do
@@ -703,11 +703,11 @@ jobs:
           done < files.txt
 
           echo "files<<EOF" >> $GITHUB_OUTPUT
-          cat ./release-assets/files.txt >> $GITHUB_OUTPUT
+          cat ./files.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
           echo "hashes<<EOF" >> $GITHUB_OUTPUT
-          cat ./release-assets/hashes.txt >> $GITHUB_OUTPUT
+          cat ./hashes.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Build changelog
