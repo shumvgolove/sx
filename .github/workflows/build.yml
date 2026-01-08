@@ -182,7 +182,7 @@ jobs:
           cabal build -j --enable-tests
           mkdir -p /out
           for i in simplex-chat simplex-chat-test; do
-            bin=$(find /project/dist-newstyle -name "$i" -type f -executable)
+            bin=$(find /project/dist-newstyle -name "$i" -type f -perm +111)
             chmod +x "$bin"
             mv "$bin" /out/
           done
@@ -357,7 +357,7 @@ jobs:
           cabal build -j --enable-tests
 
           for i in simplex-chat simplex-chat-test; do
-            bin=$(find ./dist-newstyle -name "$i" -type f -executable)
+            bin=$(find ./dist-newstyle -name "$i" -type f -perm +111)
             chmod +x "$bin"
             mv "$bin" ${{ runner.temp }}/release-assets/
           done
@@ -508,7 +508,7 @@ jobs:
           rm -rf dist-newstyle/src/direct-sq*
 
           for i in simplex-chat; do
-            bin=$(find ./dist-newstyle -name "$i" -type f -executable)
+            bin=$(find ./dist-newstyle -name "$i" -type f -perm +111)
             chmod +x "$bin"
             mv "$bin" ${{ runner.temp }}/release-assets/
           done
