@@ -508,7 +508,7 @@ jobs:
 
       - name: Prepare "release-assets" directory
         shell: msys2 {0}
-        run: mkdir -p ${{ runner.temp }}/release-assets
+        run: mkdir -p "$(cygpath -u "${{ runner.temp }}")/release-assets"
 
       - name: Build CLI
         id: windows_cli_build
@@ -516,6 +516,7 @@ jobs:
         run: |
           # Adjust PATH
           export PATH=$PATH:/c/ghcup/bin:$(echo /c/tools/ghc-*/bin || echo)
+          RELEASE_DIR="$(cygpath -u "${{ runner.temp }}")/release-assets"
 
           # Download openssl lib
           scripts/desktop/prepare-openssl-windows.sh
@@ -542,12 +543,12 @@ jobs:
           for i in simplex-chat; do
             bin=$(find ./dist-newstyle -name "${i}.exe" -type f -executable)
             chmod +x "$bin"
-            mv "$bin" ${{ runner.temp }}/release-assets/
+            mv "$bin" "${RELEASE_DIR}/"
           done
 
           # Rename CLI
-          mv "${{ runner.temp }}/release-assets/simplex-chat.exe" \
-             "${{ runner.temp }}/release-assets/${{ matrix.cli_asset_name }}"
+          mv "${RELEASE_DIR}/simplex-chat.exe" \
+             "${RELEASE_DIR}/${{ matrix.cli_asset_name }}"
 
       - name: Build Desktop
         id: windows_desktop_build
@@ -556,6 +557,7 @@ jobs:
         run: |
           # Adjust PATH
           export PATH=$PATH:/c/ghcup/bin:$(echo /c/tools/ghc-*/bin || echo)
+          RELEASE_DIR="$(cygpath -u "${{ runner.temp }}")/release-assets"
 
           # Build lib
           scripts/desktop/build-lib-windows.sh
@@ -569,7 +571,7 @@ jobs:
 
           # Prepare
           mv $PWD/release/main/msi/*imple*.msi \
-             "${{ runner.temp }}/release-assets/${{ matrix.desktop_asset_name }}"
+             "${RELEASE_DIR}/${{ matrix.desktop_asset_name }}"
 
       - name: Upload builds to artifacts
         uses: actions/upload-artifact@v6
