@@ -459,6 +459,7 @@ jobs:
           RELEASE_DIR='${{ github.workspace }}/release-assets'
           TAG='${{ github.ref_name }}'
           URL='https://github.com/${{ github.repository }}/releases/download'
+          PREFIX='${{ github.event.repository.name }}-libs'
 
           # Setup temp directory
           mkdir "$INIT_DIR" "$RELEASE_DIR" && cd "$INIT_DIR"
@@ -471,34 +472,32 @@ jobs:
           # Linux
           # -----
           # Extract libraries
-          dpkg-deb -R linux.deb linux-out/
-          cd linux-out/opt/simplex/lib/app/resources
+          dpkg-deb -R linux.deb linux-out/ && cd linux-out/opt/simplex/lib/app/resources
           # Preprare directory
           mkdir libs && cp *.so libs/
           # Archive
-          zip -r sx-libs-linux-x86_64.zip libs
+          zip -r "${PREFIX}-linux-x86_64.zip" libs
           # Back to original dir
-          mv sx-libs-linux-x86_64.zip "$RELEASE_DIR" && cd "$INIT_DIR"
+          mv "${PREFIX}-linux-x86_64.zip" "$RELEASE_DIR" && cd "$INIT_DIR"
 
           # MacOS: aarch64
           # --------------
           7z x macos-aarch64.dmg -omacos1-out/ && cd macos1-out/SimpleX/SimpleX.app/Contents/app/resources/
           mkdir libs && cp *.dylib libs/
-          zip -r sx-libs-macos-aarch64.zip libs
-          mv sx-libs-macos-aarch64.zip "$RELEASE_DIR" && cd "$INIT_DIR"
+          zip -r "${PREFIX}-macos-aarch64.zip" libs
+          mv "${PREFIX}-macos-aarch64.zip" "$RELEASE_DIR" && cd "$INIT_DIR"
 
           # Macos: x86_64
           # -------------
           7z x macos-x64.dmg -omacos2-out/ && cd macos2-out/SimpleX/SimpleX.app/Contents/app/resources/
           mkdir libs && cp *.dylib libs/
-          zip -r sx-libs-macos-x86_64.zip libs
-          mv sx-libs-macos-x86_64.zip "$RELEASE_DIR" && cd "$INIT_DIR"
-
+          zip -r "${PREFIX}-macos-x86_64.zip" libs
+          mv "${PREFIX}-macos-x86_64.zip" "$RELEASE_DIR" && cd "$INIT_DIR"
 
       - name: Create release in libs repo and upload artifacts
         uses: softprops/action-gh-release@v2
         with:
-          repository: ${{ github.repository_owner }}/sx-libs
+          repository: ${{ github.repository }}-libs
           tag_name: ${{ github.ref_name }}
           files: ${{ github.workspace }}/release-assets/*
           token: ${{ secrets.CROSS_REPO_TOKEN }}
