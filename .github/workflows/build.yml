@@ -546,7 +546,7 @@ jobs:
           done
 
           # Rename CLI
-          mv "${{ runner.temp }}/release-assets/simplex-chat" \
+          mv "${{ runner.temp }}/release-assets/simplex-chat.exe" \
              "${{ runner.temp }}/release-assets/${{ matrix.cli_asset_name }}"
 
       - name: Build Desktop
