@@ -700,6 +700,8 @@ jobs:
             filename=$(basename "$filepath")
             # Format and append to hashes.txt
             echo "SHA2-256($filename)= $hash" >> hashes.txt
+            # Newline after
+            echo >> hashes.txt
           done < files.txt
 
           echo "files<<EOF" >> $GITHUB_OUTPUT
