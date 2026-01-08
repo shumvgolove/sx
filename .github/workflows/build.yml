@@ -411,6 +411,9 @@ jobs:
           name: release-${{ matrix.os }}
           path: ./artifacts/
 
+      - name: Install OpenSSL
+        run: brew install openssl@3.0
+
       - name: Run tests
         timeout-minutes: 120
         shell: bash
