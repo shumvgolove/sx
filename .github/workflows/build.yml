@@ -242,7 +242,7 @@ jobs:
           scripts/desktop/make-appimage-linux.sh
 
       - name: Prepare AppImage
-        if: startsWith(github.ref, 'refs/tags/v') && matrix.should_run == true
+        if: startsWith(github.ref, 'refs/tags/v') && matrix.os == '22.04' && matrix.should_run == true
         shell: bash
         run: |
           mv ${{ github.workspace }}/apps/multiplatform/release/main/*imple*.AppImage \
@@ -259,7 +259,7 @@ jobs:
         if: matrix.should_run == true
         uses: actions/upload-artifact@v6
         with:
-          name: release-linux-${{ matrix.runner }}
+          name: release-linux-${{ matrix.runner }}-${{ matrix.ghc }}
           path: ${{ runner.temp }}/release-assets/*
 
   test-linux:
@@ -273,20 +273,32 @@ jobs:
           - os: 22.04
             arch: x86_64
             runner: "ubuntu-22.04"
+            ghc: "8.10.7"
+            should_run: ${{ !(github.ref == 'refs/heads/stable' || startsWith(github.ref, 'refs/tags/v')) }}
+          - os: 22.04
+            arch: x86_64
+            runner: "ubuntu-22.04"
+            ghc: ${{ needs.variables.outputs.GHC_VER }}
+            should_run: true
           - os: 24.04
             arch: x86_64
             runner: "ubuntu-24.04"
+            ghc: ${{ needs.variables.outputs.GHC_VER }}
+            should_run: true
     steps:
       - name: Checkout Code
+        if: matrix.should_run == true
         uses: actions/checkout@v6
 
       - name: Download Linux artifacts
+        if: matrix.should_run == true
         uses: actions/download-artifact@v7
         with:
-          name: release-linux-${{ matrix.runner }}
+          name: release-linux-${{ matrix.runner }}-${{ matrix.ghc }}
           path: ./artifacts/
 
       - name: Run tests
+        if: matrix.should_run == true
         timeout-minutes: 120
         shell: bash
         run: |
