@@ -264,7 +264,7 @@ jobs:
 
   test-linux:
     name: "Tests: ubuntu-${{ matrix.os }}-${{ matrix.arch }}"
-    needs: [build-linux]
+    needs: [variables, build-linux]
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -593,7 +593,7 @@ jobs:
 
   release-nodejs-libs:
     runs-on: ubuntu-latest
-    needs: [build-linux, build-macos]
+    needs: [variables, build-linux, build-macos]
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Checkout current repository
@@ -603,7 +603,7 @@ jobs:
       - name: Download Linux artifacts
         uses: actions/download-artifact@v7
         with:
-          name: release-linux-ubuntu-22.04
+          name: release-linux-ubuntu-22.04-${{ needs.variables.outputs.GHC_VER }}
           path: ${{ runner.temp }}/artifacts/linux/
 
       # aarch64 and x86_64
