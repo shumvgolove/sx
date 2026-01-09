@@ -99,6 +99,9 @@ jobs:
             should_run: true
             ghc: ${{ needs.variables.outputs.GHC_VER }}
     steps:
+      - name: test
+        run: exit 1
+
       - name: Checkout Code
         if: matrix.should_run == true
         uses: actions/checkout@v3
@@ -108,12 +111,6 @@ jobs:
         uses: ./.github/actions/swap
         with:
           swap-size-gb: 30
-
-      - name: Get UID and GID
-        id: ids
-        run: |
-          echo "uid=$(id -u)" >> $GITHUB_OUTPUT
-          echo "gid=$(id -g)" >> $GITHUB_OUTPUT
 
       # Otherwise we run out of disk space with Docker build
       - name: Free disk space
@@ -140,7 +137,9 @@ jobs:
         uses: simplex-chat/docker-setup-buildx-action@v3
 
       - name: Build and cache Docker image
+        id: docker_build
         if: matrix.should_run == true
+        continue-on-error: true
         uses: simplex-chat/docker-build-push-action@v6
         with:
           context: .
@@ -150,8 +149,18 @@ jobs:
           build-args: |
             TAG=${{ matrix.os }}
             GHC=${{ matrix.ghc }}
-            USER_UID=${{ steps.ids.outputs.uid }}
-            USER_GID=${{ steps.ids.outputs.gid }}
+
+      - name: Build and cache Docker image (2nd time)
+        if: steps.docker_build.outcome == 'failure' && matrix.should_run == true
+        uses: simplex-chat/docker-build-push-action@v6
+        with:
+          context: .
+          load: true
+          file: Dockerfile.build
+          tags: build/${{ matrix.os }}:latest
+          build-args: |
+            TAG=${{ matrix.os }}
+            GHC=${{ matrix.ghc }}
 
       # Docker needs these flags for AppImage build:
       # --device /dev/fuse
@@ -184,6 +193,7 @@ jobs:
         if: matrix.should_run == true
         shell: docker exec -t builder sh -eu {0}
         run: |
+          chmod -R 777 dist-newstyle ~/.cabal && git config --global --add safe.directory '*'
           cabal clean
           cabal update
           cabal build -j --enable-tests
@@ -265,6 +275,7 @@ jobs:
   test-linux:
     name: "Tests: ubuntu-${{ matrix.os }}-${{ matrix.arch }}"
     needs: [variables, build-linux]
+    if: (!cancelled())
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -380,6 +391,8 @@ jobs:
         id: mac_cli_build
         shell: bash
         run: |
+          cabal clean
+          cabal update
           cabal build -j --enable-tests
 
           for i in simplex-chat simplex-chat-test; do
@@ -396,6 +409,10 @@ jobs:
         id: mac_desktop_build
         if: startsWith(github.ref, 'refs/tags/v')
         shell: bash
+        env:
+          APPLE_SIMPLEX_SIGNING_KEYCHAIN: ${{ secrets.APPLE_SIMPLEX_SIGNING_KEYCHAIN }}
+          APPLE_SIMPLEX_NOTARIZATION_APPLE_ID: ${{ secrets.APPLE_SIMPLEX_NOTARIZATION_APPLE_ID }}
+          APPLE_SIMPLEX_NOTARIZATION_PASSWORD: ${{ secrets.APPLE_SIMPLEX_NOTARIZATION_PASSWORD }}
         run: |
           # Build
           scripts/ci/build-desktop-mac.sh
@@ -413,6 +430,7 @@ jobs:
   test-macos:
     name: "Tests: ${{ matrix.os }}"
     needs: [build-macos]
+    if: (!cancelled())
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
