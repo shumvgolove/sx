@@ -261,8 +261,17 @@ fun showWindow() {
     // Clear ICONIFIED so a minimized window un-minimizes; preserves MAXIMIZED_BOTH
     // when set. toFront() alone does not un-minimize on any AWT platform.
     extendedState = extendedState and Frame.ICONIFIED.inv()
+    // Linux X11 WMs with focus-stealing prevention (GNOME/KDE/XFCE default)
+    // silently ignore toFront(). The alwaysOnTop toggle is the canonical AWT
+    // workaround — see JDK-7095674 (won't-fix) and compose-multiplatform#4231.
+    // Harmless on Windows/macOS where toFront() works directly.
+    // Wayland is not covered: activation there requires xdg_activation_v1 tokens
+    // that AWT XToolkit does not expose.
+    val wasAlwaysOnTop = isAlwaysOnTop
+    isAlwaysOnTop = true
     toFront()
     requestFocus()
+    isAlwaysOnTop = wasAlwaysOnTop
   }
 }
 
