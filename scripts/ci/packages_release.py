@@ -383,8 +383,13 @@ def publish_plan() -> None:
 
 def test_names() -> None:
     if scope := os.environ.get("NPM_SCOPE"):
+        # npm provenance requires the repository of the publishing workflow.
+        url = f"git+https://github.com/{os.environ['GITHUB_REPOSITORY']}.git"
         types = read_json(f"{TYPES_DIR}/package.json")
-        write_json(f"{TYPES_DIR}/package.json", {**types, "name": registry_name(types["name"], scope)})
+        write_json(
+            f"{TYPES_DIR}/package.json",
+            {**types, "name": registry_name(types["name"], scope), "repository": {**types["repository"], "url": url}},
+        )
         nodejs = read_json(f"{NODEJS_DIR}/package.json")
         alias = f"npm:{registry_name(types['name'], scope)}@{nodejs['dependencies'][types['name']]}"
         write_json(
@@ -392,6 +397,7 @@ def test_names() -> None:
             {
                 **nodejs,
                 "name": registry_name(nodejs["name"], scope),
+                "repository": {**nodejs["repository"], "url": url},
                 "dependencies": {**nodejs["dependencies"], types["name"]: alias},
             },
         )
