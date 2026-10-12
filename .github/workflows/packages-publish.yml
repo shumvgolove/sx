@@ -17,6 +17,8 @@ on:
       - stable
     paths:
       - "packages/simplex-chat-nodejs/package.json"
+      # pins can change without a version bump while that version is not published yet
+      - "packages/simplex-chat-nodejs/src/release.ts"
       - "packages/simplex-chat-client/types/typescript/package.json"
       - "packages/simplex-chat-python/src/simplex_chat/_version.py"
 
