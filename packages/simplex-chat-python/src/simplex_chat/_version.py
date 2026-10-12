@@ -4,13 +4,13 @@ Written by scripts/ci/packages_release.py: the release PR bumps the version
 and pins new library releases with the SHA-256 of their assets.
 """
 
-__version__ = "7.1.0b6.post2"  # PEP 440 — read by hatchling for wheel metadata
-LIBS_RELEASE = "core-7.1.0.12"  # simplex-chat-libs release tag
+__version__ = "7.1.0b6.post3"  # PEP 440 — read by hatchling for wheel metadata
+LIBS_RELEASE = "core-7.1.0.13"  # simplex-chat-libs release tag
 LIBS_SHA256 = {
-    "simplex-chat-libs-linux-aarch64.zip": "d66aa1b30b9fa20225dad8ef75a9c605961e1c0adde2ba0283e2fcac4e15d260",
-    "simplex-chat-libs-linux-x86_64-postgres.zip": "925b3166f969b12082ff8ee659e5f2a9933fe40120deb80c9aa3002a5ba6c803",
-    "simplex-chat-libs-linux-x86_64.zip": "dabad0824e8813ea4a084fbf37e1ba4cf6dcea9cd8ccadc521fec200f246208a",
-    "simplex-chat-libs-macos-aarch64.zip": "aa74608b149fff7508a47eaac4284dcc6d189c6ed8b7c18428df9158bc176a61",
-    "simplex-chat-libs-macos-x86_64.zip": "a0e21457e1077be7f71b46c1c27452945b2cee2b6c50efb0004412ce5b7042ec",
-    "simplex-chat-libs-windows-x86_64.zip": "c01dad574daa101a1cbfd31ddbf2b3d0d986a4a42f97d789d2f878b2050b2b4b",
+    "simplex-chat-libs-linux-aarch64.zip": "bd3b3f2f82122c05aeec158309eabdb41514c9954fdf8979f302aa51000c4fd7",
+    "simplex-chat-libs-linux-x86_64-postgres.zip": "447be405e8ffe3742bae87b08191c532c8c6a1fce5b15dfc7ff174c3aac16531",
+    "simplex-chat-libs-linux-x86_64.zip": "d225628fb83c13ee9c3c5547afa0427a7e04d39f12757a9a33175ff904372e05",
+    "simplex-chat-libs-macos-aarch64.zip": "af8a838f0b54a4b3ed92dc64382994e23b8c599c09454af9ecce06cd077f97db",
+    "simplex-chat-libs-macos-x86_64.zip": "8066e34d25dcebd3bd1f792f581e375f0e529e68410ed202854e0a02b8d8e802",
+    "simplex-chat-libs-windows-x86_64.zip": "60400d9e9b22f7bae91017b21b66bc1fb65ca833a5795698626e5aa12c8dfc20",
 }
