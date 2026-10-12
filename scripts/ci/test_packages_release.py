@@ -1,6 +1,11 @@
+import subprocess
+import tempfile
 import unittest
 from dataclasses import replace
+from pathlib import Path
+from unittest import mock
 
+import packages_release
 from packages_release import (
     ADDON_ASSETS,
     LIBS_ASSETS,
@@ -10,6 +15,7 @@ from packages_release import (
     addon_tag,
     bump_npm_version,
     bump_python_version,
+    changed_since_publish,
     dist_tag,
     parse_python_version,
     parse_release,
@@ -175,6 +181,51 @@ class PlanTest(unittest.TestCase):
         result = plan(state(nodejs_version="7.2.0", types_version="0.13.0", python_version="7.2.0"))
         self.assertEqual(result.types_dependency, "^0.13.0")
         self.assertEqual(result.title, "packages: release types 0.13.0, nodejs 7.2.0, python 7.2.0")
+
+
+class ChangedSincePublishTest(unittest.TestCase):
+    def setUp(self):
+        self.repo = Path(tempfile.mkdtemp())
+        self.git("init", "-q")
+        self.write("pkg/version.txt", 'version = "1"\n')
+        self.write("pkg/src.txt", "a")
+        self.commit("set version")
+
+    def git(self, *args):
+        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args], cwd=self.repo, check=True)
+
+    def write(self, file, text):
+        (self.repo / file).parent.mkdir(parents=True, exist_ok=True)
+        (self.repo / file).write_text(text)
+
+    def commit(self, message):
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", message)
+
+    def changed(self):
+        with mock.patch.object(packages_release, "ROOT", self.repo):
+            return changed_since_publish("pkg", "1", "pkg", "pkg/version.txt", "^version =")
+
+    def test_compares_with_the_commit_that_set_the_version(self):
+        self.assertFalse(self.changed())
+        self.write("pkg/src.txt", "b")
+        self.commit("change")
+        self.assertTrue(self.changed())
+
+    def test_compares_with_the_published_commit(self):
+        self.write("pkg/src.txt", "b")
+        self.commit("change")
+        self.git("tag", "pkg-v1")
+        self.assertFalse(self.changed())
+        self.write("pkg/src.txt", "c")
+        self.commit("change after publish")
+        self.assertTrue(self.changed())
+
+    def test_ignores_tests_and_other_directories(self):
+        self.write("pkg/tests/t.txt", "t")
+        self.write("other/file.txt", "o")
+        self.commit("tests and other files")
+        self.assertFalse(self.changed())
 
 
 if __name__ == "__main__":

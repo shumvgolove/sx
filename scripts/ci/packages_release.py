@@ -283,12 +283,17 @@ def current_addon_tag() -> str:
     return addon_tag(files, read_json(f"{NODEJS_DIR}/package.json")["devDependencies"]["node-addon-api"])
 
 
-def changed_since_version(directory: str, version_file: str, version_pattern: str) -> bool:
-    """Shipped files changed since the commit that last set the version."""
-    version_commit = git("log", "-1", "--format=%H", "-G", version_pattern, "--", version_file)
-    diff = subprocess.run(
-        ["git", "diff", "--quiet", version_commit, "HEAD", "--", directory, f":!{directory}/tests"], cwd=ROOT
-    )
+def publish_tag(package: str, version: str) -> str:
+    """Tag of the commit a version was published from (packages-publish.yml)."""
+    return f"{package}-v{version}"
+
+
+def changed_since_publish(package: str, version: str, directory: str, version_file: str, version_pattern: str) -> bool:
+    """Shipped files changed since the version was published, or since it was set when it was not published yet."""
+    tag = f"refs/tags/{publish_tag(package, version)}"
+    tagged = subprocess.run(["git", "rev-parse", "--verify", "--quiet", tag], cwd=ROOT, capture_output=True)
+    base = tag if tagged.returncode == 0 else git("log", "-1", "--format=%H", "-G", version_pattern, "--", version_file)
+    diff = subprocess.run(["git", "diff", "--quiet", base, "HEAD", "--", directory, f":!{directory}/tests"], cwd=ROOT)
     return diff.returncode != 0
 
 
@@ -328,9 +333,9 @@ def github_release(tag: str) -> dict | None:
     return http_json(f"https://api.github.com/repos/{repo}/releases/tags/{tag}", headers)
 
 
-def npm_package(directory: str) -> Package:
+def npm_package(key: str, directory: str) -> Package:
     package = read_json(f"{directory}/package.json")
-    changed = changed_since_version(directory, f"{directory}/package.json", '"version":')
+    changed = changed_since_publish(key, package["version"], directory, f"{directory}/package.json", '"version":')
     return Package(package["version"], changed, npm_published(package["name"], package["version"]))
 
 
@@ -339,7 +344,7 @@ def prepare(args: argparse.Namespace) -> None:
     libs_tag = f"core-{cabal_version}"
     addon = current_addon_tag()
     python_version, python_pins = parse_python_version(read_text(PYTHON_VERSION_FILE))
-    python_changed = changed_since_version(PYTHON_DIR, PYTHON_VERSION_FILE, "^__version__ =")
+    python_changed = changed_since_publish("python", python_version, PYTHON_DIR, PYTHON_VERSION_FILE, "^__version__ =")
     result = plan(
         State(
             libs_tag=libs_tag,
@@ -348,8 +353,8 @@ def prepare(args: argparse.Namespace) -> None:
             addon_digests=release_digests(github_release(addon), ADDON_ASSETS),
             nodejs_pins=parse_release(read_text(RELEASE_FILE)),
             python_pins=python_pins,
-            types=npm_package(TYPES_DIR),
-            nodejs=npm_package(NODEJS_DIR),
+            types=npm_package("types", TYPES_DIR),
+            nodejs=npm_package("nodejs", NODEJS_DIR),
             python=Package(python_version, python_changed, pypi_published(python_version)),
             types_version=args.types_version,
             nodejs_version=args.nodejs_version,
