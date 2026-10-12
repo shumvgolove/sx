@@ -16,6 +16,7 @@ from packages_release import (
     bump_npm_version,
     bump_python_version,
     changed_since_publish,
+    published_tag,
     dist_tag,
     parse_python_version,
     parse_release,
@@ -220,6 +221,13 @@ class ChangedSincePublishTest(unittest.TestCase):
         self.write("pkg/src.txt", "c")
         self.commit("change after publish")
         self.assertTrue(self.changed())
+
+    def test_publish_tag_marks_the_version_published(self):
+        with mock.patch.object(packages_release, "ROOT", self.repo):
+            self.assertIsNone(published_tag("pkg", "1"))
+            self.git("tag", "pkg-v1")
+            self.assertEqual(published_tag("pkg", "1"), "refs/tags/pkg-v1")
+            self.assertIsNone(published_tag("pkg", "2"))
 
     def test_ignores_tests_and_other_directories(self):
         self.write("pkg/tests/t.txt", "t")

@@ -288,11 +288,17 @@ def publish_tag(package: str, version: str) -> str:
     return f"{package}-v{version}"
 
 
+def published_tag(package: str, version: str) -> str | None:
+    """The publish tag of the version, when it exists: registries list new versions with a delay."""
+    tag = f"refs/tags/{publish_tag(package, version)}"
+    found = subprocess.run(["git", "rev-parse", "--verify", "--quiet", tag], cwd=ROOT, capture_output=True)
+    return tag if found.returncode == 0 else None
+
+
 def changed_since_publish(package: str, version: str, directory: str, version_file: str, version_pattern: str) -> bool:
     """Shipped files changed since the version was published, or since it was set when it was not published yet."""
-    tag = f"refs/tags/{publish_tag(package, version)}"
-    tagged = subprocess.run(["git", "rev-parse", "--verify", "--quiet", tag], cwd=ROOT, capture_output=True)
-    base = tag if tagged.returncode == 0 else git("log", "-1", "--format=%H", "-G", version_pattern, "--", version_file)
+    tag = published_tag(package, version)
+    base = tag or git("log", "-1", "--format=%H", "-G", version_pattern, "--", version_file)
     diff = subprocess.run(["git", "diff", "--quiet", base, "HEAD", "--", directory, f":!{directory}/tests"], cwd=ROOT)
     return diff.returncode != 0
 
@@ -336,7 +342,8 @@ def github_release(tag: str) -> dict | None:
 def npm_package(key: str, directory: str) -> Package:
     package = read_json(f"{directory}/package.json")
     changed = changed_since_publish(key, package["version"], directory, f"{directory}/package.json", '"version":')
-    return Package(package["version"], changed, npm_published(package["name"], package["version"]))
+    published = bool(published_tag(key, package["version"])) or npm_published(package["name"], package["version"])
+    return Package(package["version"], changed, published)
 
 
 def prepare(args: argparse.Namespace) -> None:
@@ -355,7 +362,11 @@ def prepare(args: argparse.Namespace) -> None:
             python_pins=python_pins,
             types=npm_package("types", TYPES_DIR),
             nodejs=npm_package("nodejs", NODEJS_DIR),
-            python=Package(python_version, python_changed, pypi_published(python_version)),
+            python=Package(
+                python_version,
+                python_changed,
+                bool(published_tag("python", python_version)) or pypi_published(python_version),
+            ),
             types_version=args.types_version,
             nodejs_version=args.nodejs_version,
             python_version=args.python_version,
@@ -379,11 +390,12 @@ def prepare(args: argparse.Namespace) -> None:
 def publish_plan() -> None:
     for key, directory in [("types", TYPES_DIR), ("nodejs", NODEJS_DIR)]:
         package = read_json(f"{directory}/package.json")
-        pending = not npm_published(package["name"], package["version"])
+        pending = not published_tag(key, package["version"]) and not npm_published(package["name"], package["version"])
         print(f"{key}_version={package['version'] if pending else ''}")
         print(f"{key}_dist_tag={dist_tag(package['version'])}")
     version, _ = parse_python_version(read_text(PYTHON_VERSION_FILE))
-    print(f"python_version={'' if pypi_published(version) else version}")
+    pending = not published_tag("python", version) and not pypi_published(version)
+    print(f"python_version={version if pending else ''}")
 
 
 def test_names() -> None:
