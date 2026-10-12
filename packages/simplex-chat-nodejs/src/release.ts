@@ -1,6 +1,6 @@
 // Written by scripts/ci/packages_release.py from the simplex-chat-libs releases.
 
-export const LIBS_RELEASE = "core-7.1.0.11"
+export const LIBS_RELEASE = "core-7.1.0.12"
 
 export const ADDON_RELEASE: string | undefined = "nodejs-addon-308c0960c707"
 
