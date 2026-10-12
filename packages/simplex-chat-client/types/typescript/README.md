@@ -9,3 +9,4 @@ It is used in [simplex-chat](https://www.npmjs.com/package/simplex-chat) Node.js
 ## License
 
 [AGPL v3](./LICENSE)
+
