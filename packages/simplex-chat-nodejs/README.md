@@ -128,3 +128,4 @@ Library provides types and functions to:
 ## License
 
 [AGPL v3](./LICENSE)
+

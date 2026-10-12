@@ -68,3 +68,4 @@ uv publish --token "$PYPI_TOKEN"
 ## License
 
 [AGPL-3.0](./LICENSE)
+
