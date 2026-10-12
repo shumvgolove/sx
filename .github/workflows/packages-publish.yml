@@ -24,8 +24,11 @@ concurrency:
   group: packages-publish-${{ github.ref }}
   cancel-in-progress: false
 
+# Each published version is tagged <package>-v<version> on the commit it was published from:
+# the release PR bumps a package that changed since that tag.
+
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 env:
@@ -86,11 +89,14 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npm publish --provenance --access public --tag ${{ needs.plan.outputs.types_dist_tag }}
+          git tag "types-v${{ needs.plan.outputs.types_version }}" && git push origin "types-v${{ needs.plan.outputs.types_version }}"
 
       - name: Publish simplex-chat
         if: needs.plan.outputs.nodejs_version
         working-directory: packages/simplex-chat-nodejs
-        run: npm publish --provenance --access public --tag ${{ needs.plan.outputs.nodejs_dist_tag }}
+        run: |
+          npm publish --provenance --access public --tag ${{ needs.plan.outputs.nodejs_dist_tag }}
+          git tag "nodejs-v${{ needs.plan.outputs.nodejs_version }}" && git push origin "nodejs-v${{ needs.plan.outputs.nodejs_version }}"
 
   pypi:
     needs: plan
@@ -122,3 +128,6 @@ jobs:
           packages-dir: packages/simplex-chat-python/dist
           repository-url: ${{ vars.PYPI_UPLOAD_URL || 'https://upload.pypi.org/legacy/' }}
           password: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Tag the published version
+        run: git tag "python-v${{ needs.plan.outputs.python_version }}" && git push origin "python-v${{ needs.plan.outputs.python_version }}"
