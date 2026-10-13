@@ -2,7 +2,7 @@
 
 export const LIBS_RELEASE = "core-7.1.0.13"
 
-export const ADDON_RELEASE: string | undefined = "nodejs-addon-308c0960c707"
+export const ADDON_RELEASE: string | undefined = "nodejs-addon-dc4dcf6fc7e5"
 
 export const SHA256: {readonly [asset: string]: string} = {
   "simplex-chat-libs-linux-aarch64.zip": "bd3b3f2f82122c05aeec158309eabdb41514c9954fdf8979f302aa51000c4fd7",
@@ -13,7 +13,7 @@ export const SHA256: {readonly [asset: string]: string} = {
   "simplex-chat-libs-windows-x86_64.zip": "60400d9e9b22f7bae91017b21b66bc1fb65ca833a5795698626e5aa12c8dfc20",
   "simplex-chat-nodejs-linux-aarch64.node": "3636a82c56c48229e0326fa03d6ceb5c16dd3afbcc1e86337783dc53a7328d67",
   "simplex-chat-nodejs-linux-x86_64.node": "55f3479b03fdb57591179ed730da744f1aa362e7529df55221b60028415746e9",
-  "simplex-chat-nodejs-macos-aarch64.node": "17da0ed991bcc60f3a0329ba4ce8af902a02cb3dfd7ab7b84718449cc857c857",
-  "simplex-chat-nodejs-macos-x86_64.node": "6218210db6caf520ecb7b5066babfce1e51ad2082f7ba6043aa26510418c1aea",
-  "simplex-chat-nodejs-windows-x86_64.node": "03aaee6f19b216c660f492e064a02a2820c41cd4b58b2a7b7561ac97b982f90d",
+  "simplex-chat-nodejs-macos-aarch64.node": "37e979ce5b04a072c9040909cb7a791096d964845bbe161a059cf70415e23906",
+  "simplex-chat-nodejs-macos-x86_64.node": "bb4d2ca08fe6a366591fd13fc101db77d4011d6744fab11a9735b52508698696",
+  "simplex-chat-nodejs-windows-x86_64.node": "87080ce9a2b1d510438e0536ba9aadfa49ae81c7e4ab99d842041af8bcf28aab",
 }
