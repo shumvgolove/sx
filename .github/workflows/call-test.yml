@@ -12,3 +12,4 @@ jobs:
       id-token: write
     uses: ./.github/workflows/packages.yml
     secrets: inherit
+
