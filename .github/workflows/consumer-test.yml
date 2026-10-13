@@ -4,6 +4,9 @@ name: consumer test
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/consumer-test.yml"
 
 jobs:
   test:
