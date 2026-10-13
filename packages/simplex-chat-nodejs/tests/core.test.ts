@@ -255,7 +255,7 @@ describe("Core tests", () => {
       const simplex = require("./build/Release/simplex.node");
       simplex.load(${JSON.stringify(libPath)});
       (async () => {
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < ${process.platform === "win32" ? 10 : 40}; i++) {
           const dir = fs.mkdtempSync(path.join(${JSON.stringify(path.resolve(tmpDir))}, "close-"));
           const [ctrl] = await simplex.chat_migrate_init(path.join(dir, "simplex"), "key", "yesUp");
           await simplex.chat_send_cmd(ctrl, "/v");
@@ -266,14 +266,14 @@ describe("Core tests", () => {
         }
       })();
     `;
-    // a child takes about 190 s on Windows CI runners
+    // an iteration takes 5-10 s on Windows CI runners
     const runChild = () => new Promise<{code: number | null, signal: NodeJS.Signals | null, stderr: string}>((resolve) => {
-      const child = execFile(process.execPath, ["-e", script], {cwd: path.join(__dirname, ".."), timeout: 400000}, (_error, _stdout, stderr) =>
+      const child = execFile(process.execPath, ["-e", script], {cwd: path.join(__dirname, ".."), timeout: 150000}, (_error, _stdout, stderr) =>
         resolve({code: child.exitCode, signal: child.signalCode, stderr}));
     });
     const childCount = 3;
     const results = await Promise.all(Array.from({length: childCount}, runChild));
     for (const r of results) if (r.code !== 0 || r.signal !== null) console.log("child stderr:", r.stderr);
     expect(results.map(({code, signal}) => ({code, signal}))).toEqual(Array(childCount).fill({code: 0, signal: null}));
-  }, 420000);
+  }, 180000);
 });
