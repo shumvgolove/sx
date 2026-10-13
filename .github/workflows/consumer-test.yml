@@ -1,0 +1,104 @@
+name: consumer test
+
+# Throwaway: published test packages on every platform, with the fork's libs and add-on releases.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: "${{ matrix.platform }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: linux-x86_64
+          - os: ubuntu-22.04-arm
+            platform: linux-aarch64
+          - os: macos-latest
+            platform: macos-aarch64
+          - os: macos-15-intel
+            platform: macos-x86_64
+          - os: windows-latest
+            platform: windows-x86_64
+    defaults:
+      run:
+        shell: bash
+    env:
+      LIBS: https://github.com/${{ github.repository }}-libs/releases/download
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install published packages
+        run: |
+          mkdir consumer && cd consumer
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund @shhhum/simplex-chat@7.1.0-beta.6.5
+          python -m venv venv
+          if [ -d venv/Scripts ]; then PY=venv/Scripts/python; else PY=venv/bin/python; fi
+          $PY -m pip install -q --index-url https://test.pypi.org/simple/ --no-deps simplex-chat-sx-test==7.1.0b6.post3
+
+      - name: Download pinned libs and add-on, verify SHA-256
+        working-directory: consumer
+        run: |
+          libs=$(node -e 'console.log(require("@shhhum/simplex-chat/dist/release.js").LIBS_RELEASE)')
+          addon=$(node -e 'console.log(require("@shhhum/simplex-chat/dist/release.js").ADDON_RELEASE)')
+          zip=simplex-chat-libs-${{ matrix.platform }}.zip
+          node_file=simplex-chat-nodejs-${{ matrix.platform }}.node
+          curl -sSfL -o libs.zip "$LIBS/$libs/$zip"
+          curl -sSfL -o simplex.node "$LIBS/$addon/$node_file"
+          unzip -q libs.zip
+          node -e '
+            const fs = require("fs"), crypto = require("crypto")
+            const pins = require("@shhhum/simplex-chat/dist/release.js").SHA256
+            for (const [file, asset] of [["libs.zip", process.argv[1]], ["simplex.node", process.argv[2]]]) {
+              const hash = crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex")
+              console.log(asset, hash === pins[asset] ? "matches the pin" : `MISMATCH ${hash} != ${pins[asset]}`)
+              if (hash !== pins[asset]) process.exit(1)
+            }' "$zip" "$node_file"
+          if [ -d venv/Scripts ]; then PY=venv/Scripts/python; else PY=venv/bin/python; fi
+          $PY -c "
+          import hashlib, sys
+          from simplex_chat._version import LIBS_RELEASE, LIBS_SHA256
+          h = hashlib.sha256(open('libs.zip', 'rb').read()).hexdigest()
+          print('python pins', LIBS_RELEASE, h == LIBS_SHA256['$zip'])
+          sys.exit(0 if h == LIBS_SHA256['$zip'] else 1)
+          "
+
+      - name: Node.js chat
+        working-directory: consumer
+        run: |
+          HERE=$(pwd -W 2>/dev/null || pwd)
+          SIMPLEX_LIBS_DIR="$HERE/libs" SIMPLEX_ADDON_PATH="$HERE/simplex.node" node -e '
+            const {api} = require("@shhhum/simplex-chat")
+            ;(async () => {
+              const chat = await api.ChatApi.init({type: "sqlite", filePrefix: require("path").join(process.cwd(), "node-db")})
+              const r = await chat.sendChatCmd("/v")
+              console.log(r.type, r.versionInfo.version)
+              await chat.close()
+            })().catch(e => { console.error(e); process.exit(1) })'
+
+      - name: Python chat
+        working-directory: consumer
+        run: |
+          if [ -d venv/Scripts ]; then PY=venv/Scripts/python; else PY=venv/bin/python; fi
+          HERE=$(pwd -W 2>/dev/null || pwd)
+          SIMPLEX_LIBS_DIR="$HERE/libs" $PY -c "
+          import asyncio, os, simplex_chat
+          from simplex_chat import ChatApi
+          from simplex_chat.api import SqliteDb
+          async def main():
+              api = await ChatApi.init(SqliteDb(file_prefix=os.path.join(os.getcwd(), 'py-db')))
+              r = await api.send_chat_cmd('/v')
+              print(simplex_chat.__version__, r['type'], r['versionInfo']['version'])
+              await api.close()
+          asyncio.run(main())
+          "
