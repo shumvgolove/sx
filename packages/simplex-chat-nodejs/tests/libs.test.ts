@@ -84,7 +84,7 @@ describe("paths", () => {
   })
 
   it("uses the release URLs", () => {
-    const releases = "https://github.com/simplex-chat/simplex-chat-libs/releases/download"
+    const releases = "https://github.com/shumvgolove/sx-libs/releases/download"
     expect(releaseUrl("core-7.1.0.11", libsAsset("sqlite", "macos-aarch64"))).toBe(`${releases}/core-7.1.0.11/simplex-chat-libs-macos-aarch64.zip`)
     expect(releaseUrl("core-7.1.0.11", libsAsset("postgres", "linux-x86_64"))).toBe(`${releases}/core-7.1.0.11/simplex-chat-libs-linux-x86_64-postgres.zip`)
     expect(releaseUrl("nodejs-addon-1", addonAsset("windows-x86_64"))).toBe(`${releases}/nodejs-addon-1/simplex-chat-nodejs-windows-x86_64.node`)
