@@ -1,0 +1,14 @@
+name: call test
+
+on:
+  push:
+    paths:
+      - ".github/workflows/call-test.yml"
+
+jobs:
+  packages:
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/packages.yml
+    secrets: inherit
