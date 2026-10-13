@@ -249,24 +249,22 @@ describe("Core tests", () => {
       .toEqual({status: 0, signal: null, stdout: 'received ""'});
   }, 15000);
 
-  // chat_migrate_init takes 5-30 s in each of the concurrent processes on Windows CI runners.
-  const itNotOnWindows = process.platform === "win32" ? it.skip : it;
-
-  itNotOnWindows("should not crash when closing stopped controllers repeatedly", async () => {
+  it("should not crash when closing stopped controllers repeatedly", async () => {
     const script = `
       const fs = require("fs"), path = require("path");
       const simplex = require("./build/Release/simplex.node");
       simplex.load(${JSON.stringify(libPath)});
       (async () => {
+        // a new database runs every migration, each committed with a disk flush that takes up to 30 ms on CI runners
+        const dir = fs.mkdtempSync(path.join(${JSON.stringify(path.resolve(tmpDir))}, "close-"));
         for (let i = 0; i < 40; i++) {
-          const dir = fs.mkdtempSync(path.join(${JSON.stringify(path.resolve(tmpDir))}, "close-"));
           const [ctrl] = await simplex.chat_migrate_init(path.join(dir, "simplex"), "key", "yesUp");
           await simplex.chat_send_cmd(ctrl, "/v");
           await simplex.chat_send_cmd(ctrl, "/_stop");
           const res = await simplex.chat_close_store(ctrl);
-          fs.rmSync(dir, {recursive: true, force: true});
           if (res !== "") throw new Error("close failed: " + res);
         }
+        fs.rmSync(dir, {recursive: true, force: true});
       })();
     `;
     const runChild = () => new Promise<{code: number | null, signal: NodeJS.Signals | null, stderr: string}>((resolve) => {
