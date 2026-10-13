@@ -9,7 +9,7 @@ import extract = require("extract-zip")
 import type {Backend} from "./core"
 import {ADDON_RELEASE, LIBS_RELEASE, SHA256} from "./release"
 
-const GITHUB_REPO = "simplex-chat/simplex-chat-libs"
+const GITHUB_REPO = "shumvgolove/sx-libs"
 const REQUEST_TIMEOUT_MS = 60_000
 export const MAX_REDIRECTS = 5
 const PLATFORMS: {[platform: string]: {name: string, lib: string} | undefined} = {
