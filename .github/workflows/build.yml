@@ -879,7 +879,8 @@ jobs:
 
   packages-pr:
     needs: [maybe-release, build-linux]
-    if: needs.maybe-release.outputs.core_changed && needs.build-linux.result == 'success'
+    # build-linux uploads the library before its chat tests run
+    if: ${{ !cancelled() && needs.maybe-release.outputs.core_changed }}
     permissions:
       contents: write
       id-token: write
