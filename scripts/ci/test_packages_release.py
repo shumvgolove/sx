@@ -288,6 +288,14 @@ class ReleasesFileTest(unittest.TestCase):
         self.assertIn('[npm."@simplex-chat/types"]\n', text)
         self.assertIn("[npm.simplex-chat]\n", text)
 
+    def test_keeps_the_order_of_recording(self):
+        releases = {"npm": {"simplex-chat": {"7.1.0-beta.6.9": "a"}}}
+        updated = add_releases(releases, [("npm/simplex-chat", "7.1.0-beta.6.10"), ("core", "7.1.0.15")], "b")
+        self.assertEqual(
+            render_releases(updated),
+            '[npm.simplex-chat]\n"7.1.0-beta.6.9" = "a"\n"7.1.0-beta.6.10" = "b"\n\n[core]\n"7.1.0.15" = "b"\n',
+        )
+
     def test_finds_the_recorded_commit(self):
         self.assertEqual(recorded_commit(self.RELEASES, "npm/@simplex-chat/types", "0.12.2"), "t1")
         self.assertEqual(recorded_commit(self.RELEASES, "core", "7.1.0.11"), "c1")

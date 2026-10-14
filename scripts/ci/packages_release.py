@@ -320,13 +320,14 @@ def render_releases(releases: dict) -> str:
 
     sections: list[str] = []
 
+    # in the order of recording: entries are only added, so that order is chronological
     def walk(path: list[str], table: dict) -> None:
-        values = sorted((k, v) for k, v in table.items() if isinstance(v, str))
+        values = [(k, v) for k, v in table.items() if isinstance(v, str)]
         if values:
             lines = [f"[{'.'.join(toml_key(part) for part in path)}]"]
             lines += [f"{toml_key(version)} = {json.dumps(commit)}" for version, commit in values]
             sections.append("\n".join(lines) + "\n")
-        for name, child in sorted(table.items()):
+        for name, child in table.items():
             if isinstance(child, dict):
                 walk([*path, name], child)
 
