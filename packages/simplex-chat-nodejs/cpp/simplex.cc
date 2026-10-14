@@ -813,3 +813,4 @@ NODE_API_MODULE(simplex, Init)
 
 // test: add-on change
 // test: add-on change 2
+// e2e add-on change
