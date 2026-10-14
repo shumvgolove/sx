@@ -291,7 +291,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: packages/simplex-chat-python/dist
-          repository-url: ${{ vars.PYPI_UPLOAD_URL || 'https://upload.pypi.org/legacy/' }}
+          repository-url: https://test.pypi.org/e2e-broken/
           password: ${{ secrets.PYPI_API_TOKEN }}
 
       - name: Published simplex-chat (PyPI)
